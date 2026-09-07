@@ -127,10 +127,24 @@ def dom_path(el) -> str:
     return ">".join(parts)
 
 
+NOISE_PATTERN = re.compile(r"nav|menu|header|footer|promo|sidebar|breadcrumb", re.I)
+
+
+def strip_boilerplate(soup: BeautifulSoup) -> None:
+    """去掉导航栏/页头页脚/推广位这些跟正文无关的板块。"""
+    for t in soup.find_all(["nav", "header", "footer", "aside"]):
+        t.decompose()
+    for t in soup.find_all(class_=NOISE_PATTERN):
+        t.decompose()
+    for t in soup.find_all(id=NOISE_PATTERN):
+        t.decompose()
+
+
 def to_rows(html: str, source: str) -> pd.DataFrame:
     soup = BeautifulSoup(html, "html.parser")
     for t in soup(["script", "style", "noscript", "svg"]):
         t.decompose()
+    strip_boilerplate(soup)
 
     rows, seen = [], set()
 
