@@ -1,0 +1,4 @@
+Command for Running scrape.py
+
+python scrape.py "网址"        # 抓取 → 存 data/rows.csv
+python frequency.py            # 对 rows.csv 做词频统计 → 存 data/word_freq.csv
