@@ -26,6 +26,12 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
+# ========================================================================
+# 配置 CONFIG —— 要抓哪个网址就改这里
+# 不改也行：运行时用 `python scrape.py <网址或文件>` 传参会覆盖这个默认值
+# ========================================================================
+DEFAULT_URL = "https://www.tradecomplianceresourcehub.com/2026/09/02/trump-2-0-tariff-tracker/"
+
 BROWSER_HEADERS = {
     "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                    "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -43,6 +49,10 @@ BROWSER_HEADERS = {
 
 BLOCKED = {403, 429, 503, 521, 522, 523, 525}
 
+
+# ========================================================================
+# 抓取 FETCH —— 拿网页 / 本地文件，带重试和存档
+# ========================================================================
 
 def slugify(url: str) -> str:
     p = urlparse(url)
@@ -101,6 +111,10 @@ def archive(html: str, src: str, outdir: Path) -> Path:
     return path
 
 
+# ========================================================================
+# 解析 PARSE —— 把 HTML 切成一行行 (source, tag, path, text)
+# ========================================================================
+
 def dom_path(el) -> str:
     """给每行记一个 DOM 路径，方便回头核对是从页面哪块抓的"""
     parts = []
@@ -142,6 +156,10 @@ def to_rows(html: str, source: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+# ========================================================================
+# 诊断与预览 DIAGNOSE / PREVIEW —— 抓完之后打印出来看看抓得对不对
+# ========================================================================
+
 def diagnose(html: str, df: pd.DataFrame) -> None:
     soup = BeautifulSoup(html, "html.parser")
     for t in soup(["script", "style"]):
@@ -176,9 +194,15 @@ def preview(df: pd.DataFrame, n: int = 5) -> None:
         print(f"  [{r.tag}] {t}\n")
 
 
+# ========================================================================
+# 主程序 MAIN —— 命令行入口
+# 不传参数就用上面 DEFAULT_URL；传了参数（网址或文件）就用参数
+# ========================================================================
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("src", help="网址或本地 HTML 文件")
+    ap.add_argument("src", nargs="?", default=DEFAULT_URL,
+                     help="网址或本地 HTML 文件（不填就用 DEFAULT_URL）")
     ap.add_argument("--out", default="data", help="输出目录（默认 data/）")
     ap.add_argument("--no-archive", action="store_true", help="不存原始 HTML")
     a = ap.parse_args()
